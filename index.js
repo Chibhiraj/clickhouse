@@ -8,7 +8,7 @@ const port = 3001;
 
 app.use(cors());
 app.use(express.json());
-
+app.use(bodyParser.json());
 const client = createClient({
   url: 'https://chvqyh6vdu.ap-south-1.aws.clickhouse.cloud',
   username: 'default',
@@ -18,14 +18,13 @@ const client = createClient({
   format: 'json',
 });
 
-app.use(bodyParser.json());
 
 app.post('/insert', async (req, res) => {
   const { id, name } = req.body;
 
   try {
     await client.insert({
-      table: 'clickhouse_js_example_table',
+      table: 'users',
       values: [{ id, name }],
       format: 'JSONEachRow',
     });
@@ -39,7 +38,7 @@ app.post('/insert', async (req, res) => {
 app.get('/data', async (req, res) => {
   try {
     const rows = await client.query({
-      query: 'SELECT * FROM clickhouse_js_example_table',
+      query: 'SELECT * FROM users',
       format: 'JSONEachRow',
     });
     res.json(await rows.json());
@@ -48,6 +47,38 @@ app.get('/data', async (req, res) => {
     res.status(500).send('Error fetching data');
   }
 });
+
+app.put('/update/:id', async (req, res) => {
+  const { id } = req.params;
+   const {  name } = req.body;
+  try {
+    const rows = await client.query({
+      query: `ALTER TABLE users UPDATE  name = '${name}' WHERE id = '${id}'`,
+      format: 'JSONEachRow',
+    });
+    res.json(await rows.json());
+  } catch (error) {
+    console.error('Error Updating data:', error);
+    res.status(500).send('Error updating data');
+  }
+});
+
+app.delete('/delete/:uuid', async (req, res) => {
+  const { uuid } = req.params;
+  try {
+    const rows = await client.query({
+      query: `ALTER TABLE users DELETE WHERE uuid  = '${uuid}'`,
+      format: 'JSONEachRow',
+    });
+    res.json(await rows.json());
+  } catch (error) {
+    console.error('Error Deleting data:', error);
+    res.status(500).send('Error Deleting data');
+  }
+});
+
+
+
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
