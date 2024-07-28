@@ -48,17 +48,18 @@ app.get('/data', async (req, res) => {
   }
 });
 
-app.put('/update/:id', async (req, res) => {
-  const { id } = req.params;
-   const {  name } = req.body;
+app.put('/update/:uuid', async (req, res) => {
+  const { uuid } = req.params;
+  const { id, name } = req.body;
+
   try {
-    const rows = await client.query({
-      query: `ALTER TABLE users UPDATE  name = '${name}' WHERE id = '${id}'`,
+    await client.query({
+      query: `ALTER TABLE users UPDATE id = '${id}', name = '${name}' WHERE uuid = '${uuid}'`,
       format: 'JSONEachRow',
     });
-    res.json(await rows.json());
+    res.status(200).send('Data updated successfully');
   } catch (error) {
-    console.error('Error Updating data:', error);
+    console.error('Error updating data:', error);
     res.status(500).send('Error updating data');
   }
 });
